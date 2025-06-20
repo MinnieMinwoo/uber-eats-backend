@@ -1,12 +1,18 @@
 import { ApolloDriver } from "@nestjs/apollo";
-import { Module } from "@nestjs/common";
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from "@nestjs/common";
 import { GraphQLModule } from "@nestjs/graphql";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import * as Joi from "joi";
 import { ConfigModule } from "@nestjs/config";
 import { UsersModule } from "./users/users.module";
 import { User } from "./users/entities/user.entity";
-import { CommonModule } from "./common/common.module";
+import { JwtModule } from "./jwt/jwt.module";
+import { JwtMiddleWare } from "./jwt/jwt.middleware";
 
 @Module({
   imports: [
@@ -21,11 +27,14 @@ import { CommonModule } from "./common/common.module";
         DB_USERNAME: Joi.string().required(),
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
+        PRIVATE_KEY: Joi.string().required(),
       }),
     }),
     GraphQLModule.forRoot({
       driver: ApolloDriver,
       autoSchemaFile: true,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      context: ({ req }) => ({ user: req["user"] }),
     }),
     TypeOrmModule.forRoot({
       type: "postgres",
@@ -39,9 +48,18 @@ import { CommonModule } from "./common/common.module";
       entities: [User],
     }),
     UsersModule,
-    CommonModule,
+    JwtModule.forRoot({
+      privateKey: process.env.PRIVATE_KEY!,
+    }),
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleWare).forRoutes({
+      path: "/graphql",
+      method: RequestMethod.POST,
+    });
+  }
+}
