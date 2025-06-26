@@ -51,7 +51,7 @@ export class UsersService {
 
       return { ok: true };
     } catch (error) {
-      return { ok: false, error: "couldn't create account" };
+      return { ok: false, error: "Couldn't create account" };
     }
   }
 
@@ -80,15 +80,13 @@ export class UsersService {
       return {
         ok: false,
         error: error instanceof Error ? error.message : undefined,
-        token: "",
       };
     }
   }
 
   async findById(id: number): Promise<UserProfileOutput> {
     try {
-      const user = await this.users.findOne({ where: { id } });
-      if (!user) throw new Error();
+      const user = await this.users.findOneOrFail({ where: { id } });
 
       return {
         ok: true,
@@ -125,7 +123,6 @@ export class UsersService {
       await this.users.save(user);
       return { ok: true };
     } catch (error) {
-      console.error(error);
       return { ok: false, error: "Could not update profile" };
     }
   }
@@ -136,7 +133,7 @@ export class UsersService {
         where: { code },
         relations: ["user"],
       });
-      if (!verification) throw new Error();
+      if (!verification) throw new Error("Verification not found");
 
       verification.user.verified = true;
       await this.users.save(verification.user);
@@ -144,7 +141,6 @@ export class UsersService {
 
       return { ok: true };
     } catch (error) {
-      console.error(error);
       return {
         ok: false,
         error: error instanceof Error ? error.message : undefined,
