@@ -79,7 +79,7 @@ export class UsersService {
     } catch (error: unknown) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : undefined,
+        error: (error as Error).message,
       };
     }
   }
@@ -143,7 +143,7 @@ export class UsersService {
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : undefined,
+        error: (error as Error).message,
       };
     }
   }

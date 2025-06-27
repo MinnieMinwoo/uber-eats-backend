@@ -79,8 +79,13 @@ describe("UserService", () => {
       password: "",
       role: 0,
     };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it("should fail if user exists", async () => {
-      userRepository.findOne?.mockResolvedValue({
+      userRepository.findOne?.mockResolvedValueOnce({
         id: 1,
         email: "",
       });
