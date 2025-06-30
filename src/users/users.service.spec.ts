@@ -251,14 +251,18 @@ describe("UserService", () => {
         email: editProfileArgs.input.email,
       };
 
-      userRepository.findOne?.mockResolvedValue(oldUser);
+      userRepository.findOne?.mockResolvedValueOnce(oldUser);
+      userRepository.findOne?.mockResolvedValueOnce(null);
       verificationRepository.create?.mockReturnValue(newVerification);
       verificationRepository.save?.mockResolvedValue(newVerification);
 
       await service.editProfile(editProfileArgs.userId, editProfileArgs.input);
-      expect(userRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(userRepository.findOne).toHaveBeenCalledTimes(2);
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { id: editProfileArgs.userId },
+      });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { email: editProfileArgs.input.email },
       });
 
       expect(verificationRepository.create).toHaveBeenCalledWith({
@@ -298,6 +302,35 @@ describe("UserService", () => {
       });
 
       expect(result).toEqual({ ok: true });
+    });
+
+    it("should fail if duplicate email", async () => {
+      const oldUser = {
+        email: "bs@old.com",
+        verified: true,
+      };
+      const editProfileArgs = {
+        userId: 1,
+        input: { email: "bs@old.com" },
+      };
+
+      userRepository.findOne?.mockResolvedValue(oldUser);
+      const result = await service.editProfile(
+        editProfileArgs.userId,
+        editProfileArgs.input,
+      );
+      expect(userRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: editProfileArgs.userId },
+      });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { email: editProfileArgs.input.email },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: "There is a user with that email already",
+      });
     });
 
     it("should fail on exception", async () => {

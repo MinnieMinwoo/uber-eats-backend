@@ -106,9 +106,17 @@ export class UsersService {
         where: { id: userId },
       })) as User;
       if (email) {
+        const exists = await this.users.findOne({ where: { email } });
+        if (exists) {
+          return {
+            ok: false,
+            error: "There is a user with that email already",
+          };
+        }
         user.email = email;
 
         user.verified = false;
+        await this.verifications.delete({ user });
         const verification = await this.verifications.save(
           this.verifications.create({ user }),
         );

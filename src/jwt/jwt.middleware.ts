@@ -1,4 +1,4 @@
-import { Inject, Injectable, NestMiddleware } from "@nestjs/common";
+import { Injectable, NestMiddleware } from "@nestjs/common";
 import { NextFunction } from "express";
 import { JwtService } from "./jwt.service";
 import { UsersService } from "src/users/users.service";
@@ -18,8 +18,8 @@ export class JwtMiddleWare implements NestMiddleware {
       // eslint-disable-next-line no-prototype-builtins
       if (typeof decoded === "object" && decoded.hasOwnProperty("id")) {
         try {
-          const user = await this.userService.findById(decoded["id"]);
-          req["user"] = user;
+          const { user, ok } = await this.userService.findById(decoded["id"]);
+          if (ok) req["user"] = user;
         } catch (error) {
           console.error(error);
         }
